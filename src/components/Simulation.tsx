@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Controls from './components/Controls';
-import SimulationGraph from './components/SimulationGraph';
-import { ObjectType, SimObject, Counts } from './types';
+import Controls from './Controls';
+import SimulationGraph from './SimulationGraph';
+import { ObjectType, SimObject, Counts } from '../types';
 
 const Simulation = () => {
   const initialCounts: Counts = { rock: 10, paper: 10, scissors: 10 };
