@@ -1,4 +1,4 @@
-import Simulation from './simulation'
+import Simulation from './simulation.tsx'
 
 function App() {
   return (
