@@ -49,15 +49,34 @@ const Simulation = () => {
   };
 
   const handleCollision = (obj1: SimObject, obj2: SimObject): void => {
-    // Calculate bounce angles and velocities
-    const angle = Math.atan2(obj2.y - obj1.y, obj2.x - obj1.x);
-    const speed1 = Math.sqrt(obj1.dx * obj1.dx + obj1.dy * obj1.dy);
-    const speed2 = Math.sqrt(obj2.dx * obj2.dx + obj2.dy * obj2.dy);
+    // Calculate normal vector of collision
+    const nx = obj2.x - obj1.x;
+    const ny = obj2.y - obj1.y;
+    const dist = Math.sqrt(nx * nx + ny * ny);
     
-    obj1.dx = -Math.cos(angle) * speed1;
-    obj1.dy = -Math.sin(angle) * speed1;
-    obj2.dx = Math.cos(angle) * speed2;
-    obj2.dy = Math.sin(angle) * speed2;
+    // Normalize the normal vector
+    const unx = nx / dist;
+    const uny = ny / dist;
+    
+    // Calculate tangent vector (perpendicular to normal)
+    const utx = -uny;
+    const uty = unx;
+    
+    // Project velocities onto normal and tangent vectors
+    const v1n = obj1.dx * unx + obj1.dy * uny;
+    const v1t = obj1.dx * utx + obj1.dy * uty;
+    const v2n = obj2.dx * unx + obj2.dy * uny;
+    const v2t = obj2.dx * utx + obj2.dy * uty;
+    
+    // Calculate new normal velocities (elastic collision)
+    const v1nAfter = v2n;
+    const v2nAfter = v1n;
+    
+    // Convert scalar velocities back to vectors
+    obj1.dx = v1nAfter * unx + v1t * utx;
+    obj1.dy = v1nAfter * uny + v1t * uty;
+    obj2.dx = v2nAfter * unx + v2t * utx;
+    obj2.dy = v2nAfter * uny + v2t * uty;
 
     // Handle type changes after bounce
     const beats: Record<ObjectType, ObjectType> = {
