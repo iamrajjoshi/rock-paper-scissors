@@ -25,8 +25,8 @@ const Simulation = () => {
   const animationRef = useRef<number>();
   const objectsRef = useRef<SimObject[]>([]);
 
-  const CANVAS_WIDTH = 600;
-  const CANVAS_HEIGHT = 400;
+  const CANVAS_WIDTH = 1200;
+  const CANVAS_HEIGHT = 800;
   const OBJECT_RADIUS = 5;
   const SPEED = 2.5;
 
@@ -186,42 +186,42 @@ const Simulation = () => {
   }, [isRunning, updatePositions]);
 
   return (
-    <div className="p-4 flex flex-col items-center">
+    <div className="p-6 flex flex-col items-center bg-gray-50 min-h-screen">
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
         height={CANVAS_HEIGHT}
-        className="border border-gray-300 rounded-lg shadow-md mb-8"
+        className="border-2 border-gray-200 rounded-xl shadow-lg mb-8 bg-white"
       />
 
-      <div className="w-full max-w-[600px]">
-        <div className="space-x-4 mb-6 flex justify-center">
+      <div className="w-full max-w-[600px] bg-white rounded-xl shadow-md p-6">
+        <div className="space-x-4 mb-8 flex justify-center">
           <button
             onClick={handleStart}
             disabled={isRunning}
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600 transition-colors"
+            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors font-medium"
           >
             Start
           </button>
           <button
             onClick={handleStop}
             disabled={!isRunning}
-            className="px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50 hover:bg-red-600 transition-colors"
+            className="px-6 py-2.5 bg-red-600 text-white rounded-lg disabled:opacity-50 hover:bg-red-700 transition-colors font-medium"
           >
             Stop
           </button>
           <button
             onClick={handleReset}
-            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+            className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
           >
             Reset
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {(Object.keys(counts) as ObjectType[]).map(type => (
-            <div key={type} className="flex items-center space-x-4">
-              <label className="w-20 capitalize font-medium text-gray-700">{type}:</label>
+            <div key={type} className="flex items-center space-x-6">
+              <label className="w-24 capitalize font-semibold text-gray-700">{type}:</label>
               <input
                 type="range"
                 min="0"
@@ -237,7 +237,7 @@ const Simulation = () => {
                     updateObjectCount(type, newValue);
                   }
                 }}
-                className="w-48 accent-blue-500"
+                className="flex-1 h-2 accent-blue-600"
               />
               <input
                 type="number"
@@ -254,7 +254,7 @@ const Simulation = () => {
                     updateObjectCount(type, value);
                   }
                 }}
-                className="w-16 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
               />
             </div>
           ))}
