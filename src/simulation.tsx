@@ -15,7 +15,7 @@ interface Counts {
   scissors: number;
 }
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const Simulation = () => {
   const initialCounts: Counts = { rock: 10, paper: 10, scissors: 10 };
@@ -60,7 +60,7 @@ const Simulation = () => {
     }
   };
 
-  const updatePositions = (): void => {
+  const updatePositions = useCallback((): void => {
     const objects = objectsRef.current;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -97,23 +97,23 @@ const Simulation = () => {
 
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    const colors: Record<ObjectType, string> = {
-      rock: '#ff4444',
-      paper: '#44ff44',
-      scissors: '#4444ff'
+    const emojis: Record<ObjectType, string> = {
+      rock: '🪨',
+      paper: '📄',
+      scissors: '✂️'
     };
 
     objects.forEach(obj => {
-      ctx.beginPath();
-      ctx.arc(obj.x, obj.y, OBJECT_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = colors[obj.type];
-      ctx.fill();
+      ctx.font = `${OBJECT_RADIUS * 2}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emojis[obj.type], obj.x, obj.y);
     });
 
     if (isRunning) {
       animationRef.current = requestAnimationFrame(updatePositions);
     }
-  };
+  }, [isRunning]);
 
   const handleStart = (): void => {
     if (!isRunning) {
@@ -147,72 +147,74 @@ const Simulation = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isRunning]);
+  }, [isRunning, updatePositions]);
 
   return (
-    <div className="p-4">
-      <div className="mb-4 space-y-4">
-        {(Object.keys(counts) as ObjectType[]).map(type => (
-          <div key={type} className="flex items-center space-x-2">
-            <label className="w-20 capitalize">{type}:</label>
-            <input
-              type="range"
-              min="0"
-              max="50"
-              value={counts[type]}
-              onChange={(e) => setCounts(prev => ({
-                ...prev,
-                [type]: parseInt(e.target.value)
-              }))}
-              className="w-48"
-            />
-            <input
-              type="number"
-              min="0"
-              max="50"
-              value={counts[type]}
-              onChange={(e) => {
-                const value = Math.min(50, Math.max(0, parseInt(e.target.value) || 0));
-                setCounts(prev => ({
-                  ...prev,
-                  [type]: value
-                }));
-              }}
-              className="w-16 px-2 py-1 border rounded"
-            />
-          </div>
-        ))}
-      </div>
-      
-      <div className="space-x-4 mb-4">
-        <button
-          onClick={handleStart}
-          disabled={isRunning}
-          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-        >
-          Start
-        </button>
-        <button
-          onClick={handleStop}
-          disabled={!isRunning}
-          className="px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50"
-        >
-          Stop
-        </button>
-        <button
-          onClick={handleReset}
-          className="px-4 py-2 bg-gray-500 text-white rounded"
-        >
-          Reset
-        </button>
-      </div>
-
+    <div className="p-4 flex flex-col items-center">
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
         height={CANVAS_HEIGHT}
-        className="border border-gray-300"
+        className="border border-gray-300 rounded-lg shadow-md mb-8"
       />
+
+      <div className="w-full max-w-[600px]">
+        <div className="space-x-4 mb-6 flex justify-center">
+          <button
+            onClick={handleStart}
+            disabled={isRunning}
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600 transition-colors"
+          >
+            Start
+          </button>
+          <button
+            onClick={handleStop}
+            disabled={!isRunning}
+            className="px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50 hover:bg-red-600 transition-colors"
+          >
+            Stop
+          </button>
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+          >
+            Reset
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {(Object.keys(counts) as ObjectType[]).map(type => (
+            <div key={type} className="flex items-center space-x-4">
+              <label className="w-20 capitalize font-medium text-gray-700">{type}:</label>
+              <input
+                type="range"
+                min="0"
+                max="50"
+                value={counts[type]}
+                onChange={(e) => setCounts(prev => ({
+                  ...prev,
+                  [type]: parseInt(e.target.value)
+                }))}
+                className="w-48 accent-blue-500"
+              />
+              <input
+                type="number"
+                min="0"
+                max="50"
+                value={counts[type]}
+                onChange={(e) => {
+                  const value = Math.min(50, Math.max(0, parseInt(e.target.value) || 0));
+                  setCounts(prev => ({
+                    ...prev,
+                    [type]: value
+                  }));
+                }}
+                className="w-16 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
