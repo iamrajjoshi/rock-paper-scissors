@@ -21,6 +21,7 @@ const Simulation = () => {
   const initialCounts: Counts = { rock: 10, paper: 10, scissors: 10 };
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [counts, setCounts] = useState<Counts>(initialCounts);
+  const [speed, setSpeed] = useState<number>(2.5);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const objectsRef = useRef<SimObject[]>([]);
@@ -28,14 +29,13 @@ const Simulation = () => {
   const CANVAS_WIDTH = 1200;
   const CANVAS_HEIGHT = 800;
   const OBJECT_RADIUS = 5;
-  const SPEED = 2.5;
 
   const createObject = (type: ObjectType): SimObject => ({
     type,
     x: Math.random() * (CANVAS_WIDTH - 2 * OBJECT_RADIUS) + OBJECT_RADIUS,
     y: Math.random() * (CANVAS_HEIGHT - 2 * OBJECT_RADIUS) + OBJECT_RADIUS,
-    dx: (Math.random() - 0.5) * SPEED,
-    dy: (Math.random() - 0.5) * SPEED
+    dx: (Math.random() - 0.5) * speed,
+    dy: (Math.random() - 0.5) * speed
   });
 
   const initializeObjects = (): void => {
@@ -216,6 +216,54 @@ const Simulation = () => {
           >
             Reset
           </button>
+        </div>
+
+        <div className="mb-8">
+          <div className="flex items-center space-x-6">
+            <label className="w-24 font-semibold text-gray-700">Speed:</label>
+            <input
+              type="range"
+              min="0.5"
+              max="10"
+              step="0.5"
+              value={speed}
+              onChange={(e) => {
+                const newSpeed = parseFloat(e.target.value);
+                setSpeed(newSpeed);
+                // Update existing objects' speeds
+                if (isRunning) {
+                  objectsRef.current.forEach(obj => {
+                    const currentSpeed = Math.sqrt(obj.dx * obj.dx + obj.dy * obj.dy);
+                    const scale = newSpeed / currentSpeed;
+                    obj.dx *= scale;
+                    obj.dy *= scale;
+                  });
+                }
+              }}
+              className="flex-1 h-2 accent-blue-600"
+            />
+            <input
+              type="number"
+              min="0.5"
+              max="10"
+              step="0.5"
+              value={speed}
+              onChange={(e) => {
+                const newSpeed = Math.min(10, Math.max(0.5, parseFloat(e.target.value) || 0.5));
+                setSpeed(newSpeed);
+                // Update existing objects' speeds
+                if (isRunning) {
+                  objectsRef.current.forEach(obj => {
+                    const currentSpeed = Math.sqrt(obj.dx * obj.dx + obj.dy * obj.dy);
+                    const scale = newSpeed / currentSpeed;
+                    obj.dx *= scale;
+                    obj.dy *= scale;
+                  });
+                }
+              }}
+              className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+            />
+          </div>
         </div>
 
         <div className="space-y-6">
