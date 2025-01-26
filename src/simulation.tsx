@@ -49,6 +49,17 @@ const Simulation = () => {
   };
 
   const handleCollision = (obj1: SimObject, obj2: SimObject): void => {
+    // Calculate bounce angles and velocities
+    const angle = Math.atan2(obj2.y - obj1.y, obj2.x - obj1.x);
+    const speed1 = Math.sqrt(obj1.dx * obj1.dx + obj1.dy * obj1.dy);
+    const speed2 = Math.sqrt(obj2.dx * obj2.dx + obj2.dy * obj2.dy);
+    
+    obj1.dx = -Math.cos(angle) * speed1;
+    obj1.dy = -Math.sin(angle) * speed1;
+    obj2.dx = Math.cos(angle) * speed2;
+    obj2.dy = Math.sin(angle) * speed2;
+
+    // Handle type changes after bounce
     const beats: Record<ObjectType, ObjectType> = {
       rock: 'scissors',
       paper: 'rock',
@@ -57,6 +68,8 @@ const Simulation = () => {
 
     if (beats[obj1.type] === obj2.type) {
       obj2.type = obj1.type;
+    } else if (beats[obj2.type] === obj1.type) {
+      obj1.type = obj2.type;
     }
   };
 
