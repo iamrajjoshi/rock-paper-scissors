@@ -28,7 +28,7 @@ const Simulation = () => {
   const CANVAS_WIDTH = 600;
   const CANVAS_HEIGHT = 400;
   const OBJECT_RADIUS = 5;
-  const SPEED = 2;
+  const SPEED = 2.5;
 
   const createObject = (type: ObjectType): SimObject => ({
     type,
@@ -144,10 +144,33 @@ const Simulation = () => {
 
   const handleReset = (): void => {
     handleStop();
-    setCounts(initialCounts);
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx) {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    }
+  };
+
+  const updateObjectCount = (type: ObjectType, newCount: number): void => {
+    const currentObjects = objectsRef.current;
+    const currentTypeCount = currentObjects.filter(obj => obj.type === type).length;
+    
+    if (newCount > currentTypeCount) {
+      // Add new objects
+      const objectsToAdd = newCount - currentTypeCount;
+      for (let i = 0; i < objectsToAdd; i++) {
+        currentObjects.push(createObject(type));
+      }
+    } else if (newCount < currentTypeCount) {
+      // Remove random objects of the specified type
+      const objectsToRemove = currentTypeCount - newCount;
+      for (let i = 0; i < objectsToRemove; i++) {
+        const typeObjects = currentObjects.filter(obj => obj.type === type);
+        const randomIndex = Math.floor(Math.random() * typeObjects.length);
+        const indexInMain = currentObjects.indexOf(typeObjects[randomIndex]);
+        if (indexInMain !== -1) {
+          currentObjects.splice(indexInMain, 1);
+        }
+      }
     }
   };
 
@@ -204,10 +227,16 @@ const Simulation = () => {
                 min="0"
                 max="50"
                 value={counts[type]}
-                onChange={(e) => setCounts(prev => ({
-                  ...prev,
-                  [type]: parseInt(e.target.value)
-                }))}
+                onChange={(e) => {
+                  const newValue = parseInt(e.target.value);
+                  setCounts(prev => ({
+                    ...prev,
+                    [type]: newValue
+                  }));
+                  if (isRunning) {
+                    updateObjectCount(type, newValue);
+                  }
+                }}
                 className="w-48 accent-blue-500"
               />
               <input
@@ -221,6 +250,9 @@ const Simulation = () => {
                     ...prev,
                     [type]: value
                   }));
+                  if (isRunning) {
+                    updateObjectCount(type, value);
+                  }
                 }}
                 className="w-16 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
