@@ -1,21 +1,7 @@
-type ObjectType = 'rock' | 'paper' | 'scissors';
-
-interface SimObject {
-  type: ObjectType;
-  x: number;
-  y: number;
-  dx: number;
-  dy: number;
-}
-
-interface Counts {
-  [key: string]: number;
-  rock: number;
-  paper: number;
-  scissors: number;
-}
-
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Controls from './components/Controls';
+import SimulationGraph from './components/SimulationGraph';
+import { ObjectType, SimObject, Counts } from './types';
 
 const Simulation = () => {
   const initialCounts: Counts = { rock: 10, paper: 10, scissors: 10 };
@@ -25,6 +11,7 @@ const Simulation = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const objectsRef = useRef<SimObject[]>([]);
+  const [graphData, setGraphData] = useState<{ timestamp: number; counts: Counts }[]>([]);
 
   const CANVAS_WIDTH = 1200;
   const CANVAS_HEIGHT = 800;
@@ -92,6 +79,23 @@ const Simulation = () => {
     }
   };
 
+  const updateGraphData = useCallback(() => {
+    const currentCounts: Counts = {
+      rock: 0,
+      paper: 0,
+      scissors: 0
+    };
+    
+    objectsRef.current.forEach(obj => {
+      currentCounts[obj.type]++;
+    });
+
+    setGraphData(prev => [...prev, {
+      timestamp: Date.now(),
+      counts: { ...currentCounts }
+    }]);
+  }, []);
+
   const updatePositions = useCallback((): void => {
     const objects = objectsRef.current;
     const canvas = canvasRef.current;
@@ -142,10 +146,12 @@ const Simulation = () => {
       ctx.fillText(emojis[obj.type], obj.x, obj.y);
     });
 
+    updateGraphData();
+
     if (isRunning) {
       animationRef.current = requestAnimationFrame(updatePositions);
     }
-  }, [isRunning]);
+  }, [isRunning, updateGraphData]);
 
   const handleStart = (): void => {
     if (!isRunning) {
@@ -163,6 +169,7 @@ const Simulation = () => {
 
   const handleReset = (): void => {
     handleStop();
+    setGraphData([]);
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx) {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -193,6 +200,24 @@ const Simulation = () => {
     }
   };
 
+  const handleExportData = () => {
+    const csvContent = [
+      'Timestamp,Rock,Paper,Scissors',
+      ...graphData.map(({ timestamp, counts }) => 
+        `${new Date(timestamp).toISOString()},${counts.rock},${counts.paper},${counts.scissors}`
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'simulation_data.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     if (isRunning) {
       animationRef.current = requestAnimationFrame(updatePositions);
@@ -213,120 +238,39 @@ const Simulation = () => {
         className="border-2 border-gray-200 rounded-xl shadow-lg mb-8 bg-white"
       />
 
-      <div className="w-full max-w-[600px] bg-white rounded-xl shadow-md p-6">
-        <div className="space-x-4 mb-8 flex justify-center">
-          <button
-            onClick={handleStart}
-            disabled={isRunning}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors font-medium"
-          >
-            Start
-          </button>
-          <button
-            onClick={handleStop}
-            disabled={!isRunning}
-            className="px-6 py-2.5 bg-red-600 text-white rounded-lg disabled:opacity-50 hover:bg-red-700 transition-colors font-medium"
-          >
-            Stop
-          </button>
-          <button
-            onClick={handleReset}
-            className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-          >
-            Reset
-          </button>
-        </div>
+      <SimulationGraph 
+        data={graphData}
+        onExportData={handleExportData}
+      />
 
-        <div className="mb-8">
-          <div className="flex items-center space-x-6">
-            <label className="w-24 font-semibold text-gray-700">Speed:</label>
-            <input
-              type="range"
-              min="0.5"
-              max="10"
-              step="0.5"
-              value={speed}
-              onChange={(e) => {
-                const newSpeed = parseFloat(e.target.value);
-                setSpeed(newSpeed);
-                // Update existing objects' speeds
-                if (isRunning) {
-                  objectsRef.current.forEach(obj => {
-                    const currentSpeed = Math.sqrt(obj.dx * obj.dx + obj.dy * obj.dy);
-                    const scale = newSpeed / currentSpeed;
-                    obj.dx *= scale;
-                    obj.dy *= scale;
-                  });
-                }
-              }}
-              className="flex-1 h-2 accent-blue-600"
-            />
-            <input
-              type="number"
-              min="0.5"
-              max="10"
-              step="0.5"
-              value={speed}
-              onChange={(e) => {
-                const newSpeed = Math.min(10, Math.max(0.5, parseFloat(e.target.value) || 0.5));
-                setSpeed(newSpeed);
-                // Update existing objects' speeds
-                if (isRunning) {
-                  objectsRef.current.forEach(obj => {
-                    const currentSpeed = Math.sqrt(obj.dx * obj.dx + obj.dy * obj.dy);
-                    const scale = newSpeed / currentSpeed;
-                    obj.dx *= scale;
-                    obj.dy *= scale;
-                  });
-                }
-              }}
-              className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {(Object.keys(counts) as ObjectType[]).map(type => (
-            <div key={type} className="flex items-center space-x-6">
-              <label className="w-24 capitalize font-semibold text-gray-700">{type}:</label>
-              <input
-                type="range"
-                min="0"
-                max="50"
-                value={counts[type]}
-                onChange={(e) => {
-                  const newValue = parseInt(e.target.value);
-                  setCounts(prev => ({
-                    ...prev,
-                    [type]: newValue
-                  }));
-                  if (isRunning) {
-                    updateObjectCount(type, newValue);
-                  }
-                }}
-                className="flex-1 h-2 accent-blue-600"
-              />
-              <input
-                type="number"
-                min="0"
-                max="50"
-                value={counts[type]}
-                onChange={(e) => {
-                  const value = Math.min(50, Math.max(0, parseInt(e.target.value) || 0));
-                  setCounts(prev => ({
-                    ...prev,
-                    [type]: value
-                  }));
-                  if (isRunning) {
-                    updateObjectCount(type, value);
-                  }
-                }}
-                className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+      <Controls
+        isRunning={isRunning}
+        speed={speed}
+        counts={counts}
+        onStart={handleStart}
+        onStop={handleStop}
+        onReset={handleReset}
+        onSpeedChange={(newSpeed) => {
+          setSpeed(newSpeed);
+          if (isRunning) {
+            objectsRef.current.forEach(obj => {
+              const currentSpeed = Math.sqrt(obj.dx * obj.dx + obj.dy * obj.dy);
+              const scale = newSpeed / currentSpeed;
+              obj.dx *= scale;
+              obj.dy *= scale;
+            });
+          }
+        }}
+        onCountChange={(type, newCount) => {
+          setCounts(prev => ({
+            ...prev,
+            [type]: newCount
+          }));
+          if (isRunning) {
+            updateObjectCount(type, newCount);
+          }
+        }}
+      />
     </div>
   );
 };

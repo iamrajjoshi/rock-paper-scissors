@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.0.0",
     "autoprefixer": "^10.4.20",
+    "chart.js": "^4.4.7",
     "install": "^0.13.0",
     "postcss": "^8.5.1",
     "react": "^18.3.1",
